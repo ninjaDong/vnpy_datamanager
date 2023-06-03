@@ -6,7 +6,6 @@ from vnpy.trader.engine import BaseEngine, MainEngine, EventEngine
 from vnpy.trader.constant import Interval, Exchange
 from vnpy.trader.object import BarData, TickData, ContractData, HistoryRequest
 from vnpy.trader.database import BaseDatabase, get_database, BarOverview, DB_TZ
-from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.utility import ZoneInfo
 
 APP_NAME = "DataManager"
@@ -24,7 +23,6 @@ class ManagerEngine(BaseEngine):
         super().__init__(main_engine, event_engine, APP_NAME)
 
         self.database: BaseDatabase = get_database()
-        self.datafeed: BaseDatafeed = get_datafeed()
 
     def import_data_from_csv(
         self,
@@ -207,13 +205,9 @@ class ManagerEngine(BaseEngine):
             data: List[BarData] = self.main_engine.query_history(
                 req, contract.gateway_name
             )
-        # Otherwise use datafeed to query data
-        else:
-            data: List[BarData] = self.datafeed.query_bar_history(req, output)
 
-        if data:
             self.database.save_bar_data(data)
-            return(len(data))
+            return len(data)
 
         return 0
 
@@ -233,11 +227,5 @@ class ManagerEngine(BaseEngine):
             start=start,
             end=datetime.now(DB_TZ)
         )
-
-        data: List[TickData] = self.datafeed.query_tick_history(req, output)
-
-        if data:
-            self.database.save_tick_data(data)
-            return(len(data))
 
         return 0
